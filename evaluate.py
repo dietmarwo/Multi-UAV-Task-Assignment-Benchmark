@@ -1,12 +1,49 @@
+# do 'pip install fcmaes --upgrade' before executing this code
+
+# Changes to the original code:
+
+# 1) GA uses numba for a dramatic speedup. Parameters are adapted so that the
+#     execution time remains the same: popsize 50 -> 300, iterations 500 -> 6000
+#     For this reason GA performs much better than the original
+
+# 2) Experiments are configured so that wall time for small size is balanced. This means
+#     - increased effort for GA
+#     - decreased effort for ACO. 
+
+# 3) Adds a standard continous optimization algorithm - BiteOpt 
+#     from Alexey Vaneev - using the same fitness function as GA.py. 
+
+# 4) Uses NestablePool to enable BiteOpt multiprocessing - many optimization runs
+#    are performed in parallel and the best result is returned. 
+
 import numpy as np
 import matplotlib.pyplot as plt
 import random
 import pandas as pd
 import copy
-from multiprocessing import Pool
+import multiprocessing.pool
 from ga import GA
 from aco import ACO
 from pso import PSO
+from bite import Bite
+import multiprocessing as mp
+
+class NoDaemonProcess(multiprocessing.Process):
+    @property
+    def daemon(self):
+        return False
+
+    @daemon.setter
+    def daemon(self, value):
+        pass
+
+class NoDaemonContext(type(multiprocessing.get_context())):
+    Process = NoDaemonProcess
+
+class NestablePool(multiprocessing.pool.Pool):
+    def __init__(self, *args, **kwargs):
+        kwargs['context'] = NoDaemonContext()
+        super(NestablePool, self).__init__(*args, **kwargs)
 
 class Env():
     def __init__(self, vehicle_num, target_num, map_size, visualized=True, time_cost=None, repeat_cost=None):
@@ -138,16 +175,19 @@ def evaluate(vehicle_num, target_num, map_size):
     re_ga=[[] for i in range(10)]
     re_aco=[[] for i in range(10)]
     re_pso=[[] for i in range(10)]
+    re_bite=[[] for i in range(10)]
     for i in range(10):
         env = Env(vehicle_num,target_num,map_size,visualized=True)
         for j in range(10):
-            p=Pool(3)
+            p=NestablePool(mp.cpu_count())
             ga = GA(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim)
             aco = ACO(vehicle_num,target_num,env.vehicles_speed,env.targets,env.time_lim)
             pso = PSO(vehicle_num,target_num ,env.targets,env.vehicles_speed,env.time_lim)
+            bite = Bite(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, 2000000)
             ga_result=p.apply_async(ga.run)
             aco_result=p.apply_async(aco.run)
             pso_result=p.apply_async(pso.run)
+            bite_result=p.apply_async(bite.run)
             p.close()
             p.join()
             ga_task_assignmet = ga_result.get()[0]
@@ -162,6 +202,11 @@ def evaluate(vehicle_num, target_num, map_size):
             env.run(pso_task_assignmet,'PSO',i+1,j+1)
             re_pso[i].append((env.total_reward,pso_result.get()[1]))
             env.reset()
+            bite_task_assignmet = bite_result.get()[0]
+            env.run(bite_task_assignmet,'Bite',i+1,j+1)
+            re_bite[i].append((env.total_reward,bite_result.get()[1]))
+            env.reset()
+
     x_index=np.arange(10)
     ymax11=[]
     ymax12=[]
@@ -169,12 +214,16 @@ def evaluate(vehicle_num, target_num, map_size):
     ymax22=[]
     ymax31=[]
     ymax32=[]
+    ymax41=[]
+    ymax42=[]
     ymean11=[]
     ymean12=[]
     ymean21=[]
     ymean22=[]
     ymean31=[]
     ymean32=[]
+    ymean41=[]
+    ymean42=[]    
     for i in range(10):
         tmp1=[re_ga[i][j][0] for j in range(10)]
         tmp2=[re_ga[i][j][1] for j in range(10)]
@@ -194,9 +243,17 @@ def evaluate(vehicle_num, target_num, map_size):
         ymax32.append(np.amax(tmp2))
         ymean31.append(np.mean(tmp1))
         ymean32.append(np.mean(tmp2))
+        tmp1=[re_bite[i][j][0] for j in range(10)]
+        tmp2=[re_bite[i][j][1] for j in range(10)]
+        ymax41.append(np.amax(tmp1))
+        ymax42.append(np.amax(tmp2))
+        ymean41.append(np.mean(tmp1))
+        ymean42.append(np.mean(tmp2))
+
     rects1=plt.bar(x_index,ymax11,width=0.1,color='b',label='ga_max_reward')
     rects2=plt.bar(x_index+0.1,ymax21,width=0.1,color='r',label='aco_max_reward')
     rects3=plt.bar(x_index+0.2,ymax31,width=0.1,color='g',label='pso_max_reward')
+    rects4=plt.bar(x_index+0.3,ymax41,width=0.1,color='c',label='bite_max_reward')
     plt.xticks(x_index+0.1,x_index)
     plt.legend()
     plt.title('max_reward_for_'+size+'_size')
@@ -206,6 +263,7 @@ def evaluate(vehicle_num, target_num, map_size):
     rects1=plt.bar(x_index,ymax12,width=0.1,color='b',label='ga_max_time')
     rects2=plt.bar(x_index+0.1,ymax22,width=0.1,color='r',label='aco_max_time')
     rects3=plt.bar(x_index+0.2,ymax32,width=0.1,color='g',label='pso_max_time')
+    rects4=plt.bar(x_index+0.3,ymax42,width=0.1,color='c',label='bite_max_time')
     plt.xticks(x_index+0.1,x_index)
     plt.legend()
     plt.title('max_time_for_'+size+'_size')
@@ -215,6 +273,7 @@ def evaluate(vehicle_num, target_num, map_size):
     rects1=plt.bar(x_index,ymean11,width=0.1,color='b',label='ga_mean_reward')
     rects2=plt.bar(x_index+0.1,ymean21,width=0.1,color='r',label='aco_mean_reward')
     rects3=plt.bar(x_index+0.2,ymean31,width=0.1,color='g',label='pso_mean_reward')
+    rects4=plt.bar(x_index+0.3,ymean41,width=0.1,color='c',label='bite_mean_reward')
     plt.xticks(x_index+0.1,x_index)
     plt.legend()
     plt.title('mean_reward_for_'+size+'_size')
@@ -224,6 +283,7 @@ def evaluate(vehicle_num, target_num, map_size):
     rects1=plt.bar(x_index,ymean12,width=0.1,color='b',label='ga_mean_time')
     rects2=plt.bar(x_index+0.1,ymean22,width=0.1,color='r',label='aco_mean_time')
     rects3=plt.bar(x_index+0.2,ymean32,width=0.1,color='g',label='pso_mean_time')
+    rects4=plt.bar(x_index+0.3,ymean42,width=0.1,color='c',label='bite_mean_time')
     plt.xticks(x_index+0.1,x_index)
     plt.legend()
     plt.title('mean_time_for_'+size+'_size')
@@ -236,6 +296,8 @@ def evaluate(vehicle_num, target_num, map_size):
     r_aco=[]
     t_pso=[]
     r_pso=[]
+    t_bite=[]
+    r_bite=[]
     for i in range(10):
         for j in range(10):
             t_ga.append(re_ga[i][j][1])
@@ -244,9 +306,12 @@ def evaluate(vehicle_num, target_num, map_size):
             r_aco.append(re_aco[i][j][0])
             t_pso.append(re_pso[i][j][1])
             r_pso.append(re_pso[i][j][0])
-    dataframe = pd.DataFrame({'ga_time':t_ga,'ga_reward':r_ga,'aco_time':t_aco,'aco_reward':r_aco,'pso_time':t_pso,'pso_reward':r_pso})
+            t_bite.append(re_bite[i][j][1])
+            r_bite.append(re_bite[i][j][0])
+    dataframe = pd.DataFrame({'ga_time':t_ga,'ga_reward':r_ga,'aco_time':t_aco,
+                              'aco_reward':r_aco,'pso_time':t_pso,'pso_reward':r_pso,
+                              'bite_time':t_bite,'bite_reward':r_bite})
     dataframe.to_csv(size+'_size_result.csv',sep=',')
-    
     
 if __name__=='__main__':
     # small scale

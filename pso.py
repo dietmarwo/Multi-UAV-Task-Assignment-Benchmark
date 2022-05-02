@@ -357,7 +357,7 @@ class PSO():
         end_time = time.time()
         #self.cal_time  = end_time - start_time
         #self.task_assignment = self.uav_best
-        print("PSO result:", self.uav_best)
+        print("PSO result:", max(fitness), self.uav_best)
         print("PSO time:", end_time - start_time)
         return self.uav_best, end_time - start_time
         
