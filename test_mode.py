@@ -114,34 +114,33 @@ def get_fitness(vehicle_num, target_num, map_size):
 def main():
     try:      
         nobj = 3
-        evals = 10000000
+        evals = 5000000
+        
         # small scale
         #mo_problem, so_problem = get_fitness(5,30,5e3)
         # medium scale
         #mo_problem, so_problem = get_fitness(10,60,1e4)
         # large scale       
         mo_problem, so_problem = get_fitness(15,90,1.5e4)
-        store = mode.store(mo_problem.dim, nobj, 10000)
-
-        mo_fun = mode.wrapper(mo_problem, nobj, store, plot=False, interval = 1E12)
         
+        mo_fun = mode.wrapper(mo_problem, nobj, interval = 1E12)
+        so_fun = wrapper(so_problem.fitness)
+                
         workers = mp.cpu_count()
                 
         # MO parallel optimization retry
         xs, ys = modecpp.retry(mo_fun, nobj, 0, 
                       mo_problem.bounds, num_retries=workers, popsize = 300,
                   max_evaluations = evals, nsga_update = True, workers=workers)
-        
-        so_fun = wrapper(so_problem.fitness)
-        
-        # SO parallel optimization retry, needs less evals than MO
-        res = retry.minimize(so_fun, mo_problem.bounds, optimizer=Bite_cpp(evals/5), 
-                             num_retries=workers, workers=workers, logger=None)
 
         name = "pareto_uav"
         np.savez_compressed(name, xs=xs, ys=ys)
         moretry.plot(name, 0, xs, ys, all=False)
-        
+                        
+        # SO parallel optimization retry, needs less evals than MO
+        res = retry.minimize(so_fun, mo_problem.bounds, optimizer=Bite_cpp(int(evals/5)), 
+                             num_retries=workers, workers=workers, logger=None)
+
     except Exception as ex:
         print(str(ex))  
 
