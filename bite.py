@@ -16,7 +16,7 @@ from scipy.optimize import Bounds
 import multiprocessing as mp
 
 @njit(fastmath=True)
-def numpy_fitness(gene, vehicle_num, vehicles_speed, target_num, targets, time_lim, map):
+def fitness_(gene, vehicle_num, vehicles_speed, target_num, targets, time_lim, map):
     ins = np.zeros(target_num+1, dtype=numba.int32)
     seq = np.zeros(target_num, dtype=numba.int32)
     ins[target_num] = 1
@@ -68,7 +68,7 @@ class Bite():
         self.workers = mp.cpu_count()-3 # leave threads for other tests
 
     def fitness(self, gene):   
-        return -numpy_fitness(gene.astype(int), self.vehicle_num, self.vehicles_speed, 
+        return -fitness_(gene.astype(int), self.vehicle_num, self.vehicles_speed, 
                            self.target_num, self.targets, self.time_lim, self.map)
         
     def run(self):

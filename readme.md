@@ -26,6 +26,15 @@
 5) All results are created using an AMD 5950x 16 core processor
     utilizing all cores: 29 parallel BiteOpt threads, the other 3 algorithms remain single threaded. 
 
+6) Added test_bite.py where you can monitor the progress of BiteOpt applied to the problem.
+
+7) Added test_mode.py where you can monitor the progress of fcmaes-MODE applied to the problem and compare it
+   to BiteOpt for the same instance. fcmaes-MODE is a multi-objective optimizer applied to a 
+   multi-objective variant of the problem.
+   Objectives are: reward (to be maximized), maximal time (to be minimized), energy (to be minimized).
+   The maximal time constraint from the single objective case is still valid.
+   Energy consumption is approximated by `sum(dt*v*v)` 
+
 ## Introduction
 A benchmark for multi-UAV task assignment is presented in order to evaluate different algorithms. An extended Team Orienteering Problem is modeled for a kind of multi-UAV task assignment problem. Three intelligent algorithms, i.e., Genetic Algorithm, Ant Colony Optimization and Particle Swarm Optimization are implemented to solve the problem. For comparison we additionally apply the continuous optimization algorithm [BiteOpt](https://github.com/avaneev/biteopt) using the 
 [fcmaes optimization library](https://github.com/dietmarwo/fast-cma-es).

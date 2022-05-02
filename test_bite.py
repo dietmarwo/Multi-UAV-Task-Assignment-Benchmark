@@ -15,12 +15,6 @@ from bite import Bite
 import multiprocessing as mp
 
 def get_bite(vehicle_num, target_num, map_size, evals):
-    if vehicle_num==5:
-        size='small'
-    if vehicle_num==10:
-        size='medium'
-    if vehicle_num==15:
-        size='large'
     env = Env(vehicle_num,target_num,map_size,visualized=True)
     return Bite(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, evals)
 
