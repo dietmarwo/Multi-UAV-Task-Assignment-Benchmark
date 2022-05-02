@@ -22,7 +22,7 @@
 # objective optimization delivers a bigger award compared to MO-optimizaiton, 
 # but still beats the PSO, GA and ACO results by some margin. 
 
-# Projections of the pareto fronts reached over time are written, 
+# Projections of the pareto front are written to an image file, 
 # together with a compressed numpy representation of the pareto fronts.
 # The compressed npz pareto files can be read using:
  
@@ -38,7 +38,7 @@ from numba import njit
 import numba
 from scipy.optimize import Bounds
 from fcmaes.optimizer import Bite_cpp
-from fcmaes import mode, modecpp, retry
+from fcmaes import mode, modecpp, retry, moretry
 import multiprocessing as mp
 from bite import Bite
 
@@ -98,9 +98,8 @@ class Fitness:
             for j in range(i):
                 self.map[j, i] = self.map[i, j] = np.linalg.norm(
                     targets[i, :2]-targets[j, :2])
-        upper = np.array([target_num] * (vehicle_num-1) + list(range(target_num, 1, -1)))-1
+        upper = np.array([target_num] * (vehicle_num-1) + list(range(target_num, 1, -1)))-1E-9
         self.bounds = Bounds([0] * self.dim, upper) 
-        self.ints = [True]*self.dim
 
     def __call__(self, gene):   
         return fitness_(gene.astype(int), self.vehicle_num, self.vehicles_speed, 
@@ -115,30 +114,33 @@ def get_fitness(vehicle_num, target_num, map_size):
 def main():
     try:      
         nobj = 3
-        evals = 2000000
+        evals = 10000000
         # small scale
         #mo_problem, so_problem = get_fitness(5,30,5e3)
         # medium scale
         #mo_problem, so_problem = get_fitness(10,60,1e4)
-        # large scale
-        
+        # large scale       
         mo_problem, so_problem = get_fitness(15,90,1.5e4)
-        store = mode.store(mo_problem.dim, nobj, 2048)
+        store = mode.store(mo_problem.dim, nobj, 10000)
 
-        mo_fun = mode.wrapper(mo_problem, nobj, store, plot=True, interval = 1E12, name='mode256.16')
+        mo_fun = mode.wrapper(mo_problem, nobj, store, plot=False, interval = 1E12)
         
         workers = mp.cpu_count()
                 
         # MO parallel optimization retry
-        modecpp.retry(mo_fun, nobj, 0, 
-                      mo_problem.bounds, num_retries=workers, popsize = 256, ints = mo_problem.ints,
+        xs, ys = modecpp.retry(mo_fun, nobj, 0, 
+                      mo_problem.bounds, num_retries=workers, popsize = 300,
                   max_evaluations = evals, nsga_update = True, workers=workers)
         
         so_fun = wrapper(so_problem.fitness)
         
-        # SO parallel optimization retry
-        res = retry.minimize(so_fun, mo_problem.bounds, optimizer=Bite_cpp(evals), 
+        # SO parallel optimization retry, needs less evals than MO
+        res = retry.minimize(so_fun, mo_problem.bounds, optimizer=Bite_cpp(evals/5), 
                              num_retries=workers, workers=workers, logger=None)
+
+        name = "pareto_uav"
+        np.savez_compressed(name, xs=xs, ys=ys)
+        moretry.plot(name, 0, xs, ys, all=False)
         
     except Exception as ex:
         print(str(ex))  
