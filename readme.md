@@ -19,7 +19,7 @@
     to be coded, since we can apply a continuous optimization library 
     [fcmaes](https://github.com/dietmarwo/fast-cma-es). Execute "pip install fcmaes" to use it. 
 
-4) Uses NestablePool to enable BiteOpt multiprocessing: many BiteOpt optimization runs
+4) Uses NestablePool to enable BiteOpt multiprocessing: Many BiteOpt optimization runs
    are performed in parallel and the best result is returned. Set workers=1 
    if you want to test BiteOpt single threaded. 
    
