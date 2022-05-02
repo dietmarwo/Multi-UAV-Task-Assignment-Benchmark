@@ -44,7 +44,7 @@ A series of experiments with different settings are conducted to evaluate four a
 Notice that the first three algorithms run single threaded, BiteOpt uses all remaining threads available on the machine to perform parallel optimization runs.
 Optimization cannot easily utilize GPU resources, so at least we should utilize the whole CPU when comparing later with machine learning approaches. 
 
-<img src="./img/uav_reward.png" width="1280" height="720" />  
+<img src="./img/uav_reward.png" width="1280" height="500" />  
 
 <img src="./img/uav_results.png" width="1280" height="720" />  
 
