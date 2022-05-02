@@ -130,7 +130,7 @@ def main():
                 
         # MO parallel optimization retry
         xs, ys = modecpp.retry(mo_fun, nobj, 0, 
-                      mo_problem.bounds, num_retries=workers, popsize = 300,
+                      mo_problem.bounds, num_retries=workers, popsize = 512,
                   max_evaluations = evals, nsga_update = True, workers=workers)
 
         name = "pareto_uav"
