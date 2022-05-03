@@ -6,6 +6,9 @@ from numba import njit
 from numba.typed import List
 import numba
 
+# Performance is largely improved by using https://numba.pydata.org/
+# See https://github.com/dietmarwo/fast-cma-es/blob/master/tutorials/UAV.adoc
+
 @njit(fastmath=True)
 def fitness_(gene, vehicle_num, vehicles_speed, target_num, targets, time_lim, map):
     ins = np.zeros(target_num+1, dtype=numba.int32)

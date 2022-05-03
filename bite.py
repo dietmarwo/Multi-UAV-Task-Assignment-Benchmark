@@ -3,7 +3,9 @@
 # Applies a standard continous optimization algorithm - BiteOpt 
 # from Alexey Vaneev - using the same fitness function as GA.py. 
 
-# The fitness function uses numba for speed up. 
+# The fitness function uses https://numba.pydata.org/ to lower execution time.
+
+# See https://github.com/dietmarwo/fast-cma-es/blob/master/tutorials/UAV.adoc 
 
 import numpy as np
 import time

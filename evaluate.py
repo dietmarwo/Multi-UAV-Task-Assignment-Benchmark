@@ -16,6 +16,8 @@
 # 4) Uses NestablePool to enable BiteOpt multiprocessing - many optimization runs
 #    are performed in parallel and the best result is returned. 
 
+# See https://github.com/dietmarwo/fast-cma-es/blob/master/tutorials/UAV.adoc
+
 import numpy as np
 import matplotlib.pyplot as plt
 import random

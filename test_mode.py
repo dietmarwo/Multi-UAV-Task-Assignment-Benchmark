@@ -30,6 +30,8 @@
 #                xs = list(data['xs'])
 #                ys = list(data['ys'])
 
+# See https://github.com/dietmarwo/fast-cma-es/blob/master/tutorials/UAV.adoc
+
 from scipy.optimize import Bounds
 from fcmaes.optimizer import wrapper
 from evaluate import Env
@@ -114,7 +116,7 @@ def get_fitness(vehicle_num, target_num, map_size):
 def main():
     try:      
         nobj = 3
-        evals = 5000000
+        evals = 5000000 # even 100000000 makes sense, but requires about 1 hour
         
         # small scale
         #mo_problem, so_problem = get_fitness(5,30,5e3)

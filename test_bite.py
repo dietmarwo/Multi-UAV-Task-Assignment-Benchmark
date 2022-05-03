@@ -8,6 +8,8 @@
 # On an AMD 5950 16 core processor more than one million fitness executions per second
 # are performed. 
 
+# See https://github.com/dietmarwo/fast-cma-es/blob/master/tutorials/UAV.adoc
+
 from scipy.optimize import Bounds
 from fcmaes.optimizer import wrapper
 from evaluate import Env
