@@ -18,6 +18,10 @@ class ACO():
         self.beta = 2  
         self.k1 = 0.03
         self.iter_max = 30
+        
+    def name(self):
+        return "ACO"    
+        
     #matrix of the distances between cities 
     def distance_matrix(self):
         dis_mat = []

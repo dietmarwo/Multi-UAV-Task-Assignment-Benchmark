@@ -133,6 +133,9 @@ class GA():
         self.tmp_pop = None
         self.tmp_ff = None
         self.tmp_size = 0
+        
+    def name(self):
+        return "GA"
 
     def fitness(self, gene):   
         return fitness_(gene, self.vehicle_num, self.vehicles_speed, 

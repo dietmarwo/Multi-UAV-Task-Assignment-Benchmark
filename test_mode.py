@@ -38,11 +38,10 @@ from evaluate import Env
 import numpy as np
 from numba import njit
 import numba
-from scipy.optimize import Bounds
+from fcmaesopt import Optimizer
 from fcmaes.optimizer import Bite_cpp
 from fcmaes import mode, modecpp, retry, moretry
 import multiprocessing as mp
-from bite import Bite
 
 @njit(fastmath=True)
 def fitness_(gene, vehicle_num, vehicles_speed, target_num, targets, time_lim, map):
@@ -111,7 +110,7 @@ class Fitness:
 def get_fitness(vehicle_num, target_num, map_size):
     env = Env(vehicle_num,target_num,map_size,visualized=True)
     return Fitness(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim), \
-           Bite(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, 0)
+           Optimizer(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Bite_cpp(0))
 
 def main():
     try:      

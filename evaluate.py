@@ -10,13 +10,11 @@
 #     - increased effort for GA
 #     - decreased effort for ACO. 
 
-# 3) Adds a standard continous optimization algorithm - BiteOpt 
-#     from Alexey Vaneev - using the same fitness function as GA.py. 
+# 3) Adds a standard continuous optimization algorithms
+#    BiteOpt, CR-FM-NES and DE using the same fitness function as GA.py. 
 
 # 4) Uses NestablePool to enable BiteOpt multiprocessing - many optimization runs
 #    are performed in parallel and the best result is returned. 
-
-# See https://github.com/dietmarwo/fast-cma-es/blob/master/tutorials/UAV.adoc
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -27,8 +25,11 @@ import multiprocessing.pool
 from ga import GA
 from aco import ACO
 from pso import PSO
-from bite import Bite
+from fcmaesopt import Optimizer
+from fcmaes.optimizer import Bite_cpp, De_cpp, Crfmnes_cpp
+
 import multiprocessing as mp
+import seaborn as sns
 
 class NoDaemonProcess(multiprocessing.Process):
     @property
@@ -174,151 +175,101 @@ def evaluate(vehicle_num, target_num, map_size):
         size='medium'
     if vehicle_num==15:
         size='large'
-    re_ga=[[] for i in range(10)]
-    re_aco=[[] for i in range(10)]
-    re_pso=[[] for i in range(10)]
-    re_bite=[[] for i in range(10)]
-    for i in range(10):
+    num = 5
+    onum = 6
+    dim = vehicle_num + target_num - 2
+    re_opt = []
+    for _ in range(onum):       
+        re_opt.append([[] for i in range(num)])
+    for i in range(num):
         env = Env(vehicle_num,target_num,map_size,visualized=True)
-        for j in range(10):
+        for j in range(num):
+            opt_result = []
             p=NestablePool(mp.cpu_count())
-            ga = GA(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim)
-            aco = ACO(vehicle_num,target_num,env.vehicles_speed,env.targets,env.time_lim)
-            pso = PSO(vehicle_num,target_num ,env.targets,env.vehicles_speed,env.time_lim)
-            bite = Bite(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, 2000000)
-            ga_result=p.apply_async(ga.run)
-            aco_result=p.apply_async(aco.run)
-            pso_result=p.apply_async(pso.run)
-            bite_result=p.apply_async(bite.run)
+            opt = [GA(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim),
+                   ACO(vehicle_num,target_num,env.vehicles_speed,env.targets,env.time_lim),
+                   PSO(vehicle_num,target_num ,env.targets,env.vehicles_speed,env.time_lim),
+                   Optimizer(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Bite_cpp(2000000)),
+                   Optimizer(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Crfmnes_cpp(2000000)),
+                   # we use mixed integer enhancement for fcmaes differential evolution (parameter ints)
+                   Optimizer(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, De_cpp(2000000, ints=[True]*dim))]
+            for k in range(onum):       
+                opt_result.append(p.apply_async(opt[k].run))
             p.close()
             p.join()
-            ga_task_assignmet = ga_result.get()[0]
-            env.run(ga_task_assignmet,'GA',i+1,j+1)
-            re_ga[i].append((env.total_reward,ga_result.get()[1]))
-            env.reset()
-            aco_task_assignmet = aco_result.get()[0]
-            env.run(aco_task_assignmet,'ACO',i+1,j+1)
-            re_aco[i].append((env.total_reward,aco_result.get()[1]))
-            env.reset()
-            pso_task_assignmet = pso_result.get()[0]
-            env.run(pso_task_assignmet,'PSO',i+1,j+1)
-            re_pso[i].append((env.total_reward,pso_result.get()[1]))
-            env.reset()
-            bite_task_assignmet = bite_result.get()[0]
-            env.run(bite_task_assignmet,'Bite',i+1,j+1)
-            re_bite[i].append((env.total_reward,bite_result.get()[1]))
-            env.reset()
+            for k in range(onum): 
+                opt_task_assignment = opt_result[k].get()[0]
+                env.run(opt_task_assignment,opt[k].name(),i+1,j+1)
+                re_opt[k][i].append((env.total_reward,opt_result[k].get()[1]))
+                env.reset()
 
-    x_index=np.arange(10)
-    ymax11=[]
-    ymax12=[]
-    ymax21=[]
-    ymax22=[]
-    ymax31=[]
-    ymax32=[]
-    ymax41=[]
-    ymax42=[]
-    ymean11=[]
-    ymean12=[]
-    ymean21=[]
-    ymean22=[]
-    ymean31=[]
-    ymean32=[]
-    ymean41=[]
-    ymean42=[]    
-    for i in range(10):
-        tmp1=[re_ga[i][j][0] for j in range(10)]
-        tmp2=[re_ga[i][j][1] for j in range(10)]
-        ymax11.append(np.amax(tmp1))
-        ymax12.append(np.amax(tmp2))
-        ymean11.append(np.mean(tmp1))
-        ymean12.append(np.mean(tmp2))
-        tmp1=[re_aco[i][j][0] for j in range(10)]
-        tmp2=[re_aco[i][j][1] for j in range(10)]
-        ymax21.append(np.amax(tmp1))
-        ymax22.append(np.amax(tmp2))
-        ymean21.append(np.mean(tmp1))
-        ymean22.append(np.mean(tmp2))
-        tmp1=[re_pso[i][j][0] for j in range(10)]
-        tmp2=[re_pso[i][j][1] for j in range(10)]
-        ymax31.append(np.amax(tmp1))
-        ymax32.append(np.amax(tmp2))
-        ymean31.append(np.mean(tmp1))
-        ymean32.append(np.mean(tmp2))
-        tmp1=[re_bite[i][j][0] for j in range(10)]
-        tmp2=[re_bite[i][j][1] for j in range(10)]
-        ymax41.append(np.amax(tmp1))
-        ymax42.append(np.amax(tmp2))
-        ymean41.append(np.mean(tmp1))
-        ymean42.append(np.mean(tmp2))
-
-    rects1=plt.bar(x_index,ymax11,width=0.1,color='b',label='ga_max_reward')
-    rects2=plt.bar(x_index+0.1,ymax21,width=0.1,color='r',label='aco_max_reward')
-    rects3=plt.bar(x_index+0.2,ymax31,width=0.1,color='g',label='pso_max_reward')
-    rects4=plt.bar(x_index+0.3,ymax41,width=0.1,color='c',label='bite_max_reward')
+    x_index=np.arange(num)
+    ymax1 = [[] for i in range(onum)]
+    ymax2 = [[] for i in range(onum)]
+    ymean1 = [[] for i in range(onum)]
+    ymean2 = [[] for i in range(onum)]
+  
+    for i in range(num):
+        for k in range(onum): 
+            tmp1=[re_opt[k][i][j][0] for j in range(num)]
+            tmp2=[re_opt[k][i][j][1] for j in range(num)]
+            ymax1[k].append(np.amax(tmp1))
+            ymax2[k].append(np.amax(tmp2))
+            ymean1[k].append(np.mean(tmp1))
+            ymean2[k].append(np.mean(tmp2))
+ 
+    rects = []
+    cols = sns.color_palette()
+    for k in range(onum): 
+        rects.append(plt.bar(x_index + 0.1*k, ymax1[k],width=0.1,color=cols[k],label=opt[k].name() + '_max_reward'))
     plt.xticks(x_index+0.1,x_index)
     plt.legend()
     plt.title('max_reward_for_'+size+'_size')
     plt.savefig('max_reward_'+size+'.png')
     plt.cla()
-    
-    rects1=plt.bar(x_index,ymax12,width=0.1,color='b',label='ga_max_time')
-    rects2=plt.bar(x_index+0.1,ymax22,width=0.1,color='r',label='aco_max_time')
-    rects3=plt.bar(x_index+0.2,ymax32,width=0.1,color='g',label='pso_max_time')
-    rects4=plt.bar(x_index+0.3,ymax42,width=0.1,color='c',label='bite_max_time')
+    for k in range(onum): 
+        rects.append(plt.bar(x_index + 0.1*k, ymax2[k],width=0.1,color=cols[k],label=opt[k].name() + '_max_time'))
     plt.xticks(x_index+0.1,x_index)
     plt.legend()
     plt.title('max_time_for_'+size+'_size')
     plt.savefig('max_time_'+size+'.png')
     plt.cla()
-    
-    rects1=plt.bar(x_index,ymean11,width=0.1,color='b',label='ga_mean_reward')
-    rects2=plt.bar(x_index+0.1,ymean21,width=0.1,color='r',label='aco_mean_reward')
-    rects3=plt.bar(x_index+0.2,ymean31,width=0.1,color='g',label='pso_mean_reward')
-    rects4=plt.bar(x_index+0.3,ymean41,width=0.1,color='c',label='bite_mean_reward')
+
+    for k in range(onum): 
+        rects.append(plt.bar(x_index + 0.1*k, ymean1[k],width=0.1,color=cols[k],label=opt[k].name() + '_mean_reward'))
     plt.xticks(x_index+0.1,x_index)
     plt.legend()
     plt.title('mean_reward_for_'+size+'_size')
     plt.savefig('mean_reward_'+size+'.png')
     plt.cla()
     
-    rects1=plt.bar(x_index,ymean12,width=0.1,color='b',label='ga_mean_time')
-    rects2=plt.bar(x_index+0.1,ymean22,width=0.1,color='r',label='aco_mean_time')
-    rects3=plt.bar(x_index+0.2,ymean32,width=0.1,color='g',label='pso_mean_time')
-    rects4=plt.bar(x_index+0.3,ymean42,width=0.1,color='c',label='bite_mean_time')
+    for k in range(onum): 
+        rects.append(plt.bar(x_index + 0.1*k, ymean2[k],width=0.1,color=cols[k],label=opt[k].name() + '_mean_time'))
     plt.xticks(x_index+0.1,x_index)
     plt.legend()
     plt.title('mean_time_for_'+size+'_size')
     plt.savefig('mean_time_'+size+'.png')
     plt.cla()
-    
-    t_ga=[]
-    r_ga=[]
-    t_aco=[]
-    r_aco=[]
-    t_pso=[]
-    r_pso=[]
-    t_bite=[]
-    r_bite=[]
-    for i in range(10):
-        for j in range(10):
-            t_ga.append(re_ga[i][j][1])
-            r_ga.append(re_ga[i][j][0])
-            t_aco.append(re_aco[i][j][1])
-            r_aco.append(re_aco[i][j][0])
-            t_pso.append(re_pso[i][j][1])
-            r_pso.append(re_pso[i][j][0])
-            t_bite.append(re_bite[i][j][1])
-            r_bite.append(re_bite[i][j][0])
-    dataframe = pd.DataFrame({'ga_time':t_ga,'ga_reward':r_ga,'aco_time':t_aco,
-                              'aco_reward':r_aco,'pso_time':t_pso,'pso_reward':r_pso,
-                              'bite_time':t_bite,'bite_reward':r_bite})
+     
+    t_opt = [[] for i in range(onum)]
+    r_opt = [[] for i in range(onum)]
+
+    for i in range(num):
+        for j in range(num):
+            for k in range(onum): 
+                t_opt[k].append(re_opt[k][i][j][1])
+                r_opt[k].append(re_opt[k][i][j][0])
+    optdict = {}
+    for k in range(onum):     
+        optdict[opt[k].name() + '_time'] = t_opt[k]
+        optdict[opt[k].name() + '_reward'] = r_opt[k]
+    dataframe = pd.DataFrame(optdict)
     dataframe.to_csv(size+'_size_result.csv',sep=',')
     
 if __name__=='__main__':
     # small scale
     evaluate(5,30,5e3)
-    # medium scale
+    # # medium scale
     evaluate(10,60,1e4)
     # large scale
     evaluate(15,90,1.5e4)

@@ -62,6 +62,10 @@ class PSO():
         self.time_out = np.zeros(self.uav_num)
         
         self.cal_time = 0
+        
+    def name(self):
+        return "PSO"
+    
     # ------------------Get Initial parameter------------------
 
     def fun_get_initial_parameter(self):

@@ -12,21 +12,23 @@
     problem size you see which algorithms scale badly: Increase execution time superlinear
     in relation to the problem size. Avoid these for large problems. 
 
-3) Adds a standard continuous optimization algorithm: [BiteOpt](https://github.com/avaneev/biteopt) 
-    from Aleksey Vaneev - using the same fitness function as GA.py. 
-    BiteOpt is the only algorithm included which works well with a large problem size. 
-    It is by far the simplest implementation, only the fitness function needs
-    to be coded, since we can apply a continuous optimization library 
+3) Adds standard continuous optimization algorithms: 
+    - [BiteOpt](https://github.com/avaneev/biteopt) from Aleksey Vaneev
+    - [CR-FM-NES](https://arxiv.org/abs/2201.11422) from Masahiro Nomura
+    - [fcmaes DE](https://github.com/dietmarwo/fast-cma-es) from Dietmar Wolz
+    all using the same fitness function as GA.py. 
+    These are by far the simplest implementations, only the fitness function needs
+    to be coded, since we can use algorithms from the continuous optimization library 
     [fcmaes](https://github.com/dietmarwo/fast-cma-es). Execute "pip install fcmaes" to use it. 
 
-4) Uses NestablePool to enable BiteOpt multiprocessing: Many BiteOpt optimization runs
-   are performed in parallel and the best result is returned. Set workers=1 
-   if you want to test BiteOpt single threaded. 
+4) Uses NestablePool to enable multiprocessing: Many fcmaes optimization runs
+   are performed in parallel and the best result is returned. 
    
 5) All results are created using an AMD 5950x 16 core processor
-    utilizing all cores: 29 parallel BiteOpt threads, the other 3 algorithms remain single threaded. 
+    utilizing all cores: 8 parallel threads for each fcmaes optimizer, 
+    the other 3 algorithms remain single threaded. 
 
-6) Added test_bite.py where you can monitor the progress of BiteOpt applied to the problem.
+6) Added test_fcmaes.py where you can monitor the progress of fcmaes algorithms applied to the problem.
 
 7) Added test_mode.py where you can monitor the progress of fcmaes-MODE applied to the problem and compare it
    to BiteOpt for the same instance. fcmaes-MODE is a multi-objective optimizer applied to a 
@@ -39,9 +41,9 @@
 A benchmark for multi-UAV task assignment is presented in order to evaluate different algorithms. An extended Team Orienteering Problem is modeled for a kind of multi-UAV task assignment problem. Three intelligent algorithms, i.e., Genetic Algorithm, Ant Colony Optimization and Particle Swarm Optimization are implemented to solve the problem. For comparison we additionally apply the continuous optimization algorithm [BiteOpt](https://github.com/avaneev/biteopt) using the 
 [fcmaes optimization library](https://github.com/dietmarwo/fast-cma-es).
 
-A series of experiments with different settings are conducted to evaluate four algorithms. The modeled problem and the evaluation results constitute a benchmark, which can be used to evaluate other algorithms used for multi-UAV task assignment problems.
+A series of experiments with different settings are conducted to evaluate six algorithms. The modeled problem and the evaluation results constitute a benchmark, which can be used to evaluate other algorithms used for multi-UAV task assignment problems.
 
-Notice that the first three algorithms run single threaded, BiteOpt uses all remaining threads available on the machine to perform parallel optimization runs.
+Notice that the first three algorithms run single threaded, the three fcmaes continuous optimizers divide the remaining threads available on the machine to perform parallel optimization runs.
 Optimization cannot easily utilize GPU resources, so at least we should utilize the whole CPU when comparing later with machine learning approaches. 
 
 <img src="./img/uav_reward.png" width="1280" height="500" />  
@@ -68,35 +70,22 @@ There should be a function called `run()` in the algorithm class, and the functi
 
 ### 2. Evaluate
 
-You can replace one algorithm  below with another algorithm in `evaluate.py`, and then `python evaluate.py`. If you don't want to evaluate three algorithm together, you should modify the code properly( this is easy).    
+You can replace one algorithm  below with another algorithm in `evaluate.py`. If you don't want to evaluate six algorithm together, you should modify the code properly( this is easy).    
 
 ```python
-        ga = GA(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim)
-        aco = ACO(vehicle_num,target_num,env.vehicles_speed,env.targets,env.time_lim)
-        pso = PSO(vehicle_num,target_num ,env.targets,env.vehicles_speed,env.time_lim)
-        bite = Bite(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, 2000000)
-        ga_result=p.apply_async(ga.run)
-        aco_result=p.apply_async(aco.run)
-        pso_result=p.apply_async(pso.run)
-        bite_result=p.apply_async(bite.run)
-        p.close()
-        p.join()
-        ga_task_assignmet = ga_result.get()[0]
-        env.run(ga_task_assignmet,'GA',i+1,j+1)
-        re_ga[i].append((env.total_reward,ga_result.get()[1]))
-        env.reset()
-        aco_task_assignmet = aco_result.get()[0]
-        env.run(aco_task_assignmet,'ACO',i+1,j+1)
-        re_aco[i].append((env.total_reward,aco_result.get()[1]))
-        env.reset()
-        pso_task_assignmet = pso_result.get()[0]
-        env.run(pso_task_assignmet,'PSO',i+1,j+1)
-        re_pso[i].append((env.total_reward,pso_result.get()[1]))
-        env.reset()
-        bite_task_assignmet = bite_result.get()[0]
-        env.run(bite_task_assignmet,'Bite',i+1,j+1)
-        re_bite[i].append((env.total_reward,bite_result.get()[1]))
-        env.reset()
+        env = Env(vehicle_num,target_num,map_size,visualized=True)
+        for j in range(num):
+            p=NestablePool(mp.cpu_count())
+            opt = [GA(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim),
+                   ACO(vehicle_num,target_num,env.vehicles_speed,env.targets,env.time_lim),
+                   PSO(vehicle_num,target_num ,env.targets,env.vehicles_speed,env.time_lim),
+                   Optimizer(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Bite_cpp(2000000)),
+                   Optimizer(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Crfmnes_cpp(2000000)),
+                   # we use mixed integer enhancement for fcmaes differential evolution (parameter ints)
+                   Optimizer(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, De_cpp(2000000, ints=[True]*dim))]
+            for k in range(onum):       
+                opt_result.append(p.apply_async(opt[k].run))
+
 ```
 
 ### 3. About reinforcement learning
