@@ -26,7 +26,7 @@ from ga import GA
 from aco import ACO
 from pso import PSO
 from fcmaesopt import Optimizer
-from fcmaes.optimizer import Bite_cpp, De_cpp, Crfmnes_cpp
+from fcmaes.optimizer import Bite_cpp, Cma_cpp, Crfmnes_cpp
 
 import multiprocessing as mp
 import seaborn as sns
@@ -49,16 +49,25 @@ class NestablePool(multiprocessing.pool.Pool):
         super(NestablePool, self).__init__(*args, **kwargs)
 
 class Env():
-    def __init__(self, vehicle_num, target_num, map_size, visualized=True, time_cost=None, repeat_cost=None):
+    def __init__(self, vehicle_num, target_num, map_size, visualized=True, 
+                 time_cost=None, repeat_cost=None, seed = None):
+        if not seed is None:
+            random.seed(seed)
         self.vehicles_position = np.zeros(vehicle_num,dtype=np.int32)
         self.vehicles_speed = np.zeros(vehicle_num,dtype=np.int32)
         self.targets = np.zeros(shape=(target_num+1,4),dtype=np.int32)
         if vehicle_num==5:
             self.size='small'
+            self.evals = 1000000
+            self.retries = 1
         if vehicle_num==10:
             self.size='medium'
+            self.evals = 1500000
+            self.retries = 1
         if vehicle_num==15:
             self.size='large'
+            self.evals = 2000000
+            self.retries = 1
         self.map_size = map_size
         self.speed_range = [10, 15, 30]
         #self.time_lim = 1e6
@@ -177,22 +186,21 @@ def evaluate(vehicle_num, target_num, map_size):
         size='large'
     num = 5
     onum = 6
-    dim = vehicle_num + target_num - 2
     re_opt = []
     for _ in range(onum):       
         re_opt.append([[] for i in range(num)])
     for i in range(num):
-        env = Env(vehicle_num,target_num,map_size,visualized=True)
+        env = Env(vehicle_num,target_num,map_size,visualized=True,seed=37*i+13)
         for j in range(num):
             opt_result = []
             p=NestablePool(mp.cpu_count())
             opt = [GA(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim),
                    ACO(vehicle_num,target_num,env.vehicles_speed,env.targets,env.time_lim),
                    PSO(vehicle_num,target_num ,env.targets,env.vehicles_speed,env.time_lim),
-                   Optimizer(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Bite_cpp(2000000)),
-                   Optimizer(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Crfmnes_cpp(2000000)),
-                   # we use mixed integer enhancement for fcmaes differential evolution (parameter ints)
-                   Optimizer(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, De_cpp(2000000, ints=[True]*dim))]
+                   Optimizer(env,vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Bite_cpp(env.evals)),
+                   Optimizer(env,vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Crfmnes_cpp(env.evals, popsize=128)),
+                   # we have to disable premature termination of CMA-ES
+                   Optimizer(env,vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Cma_cpp(env.evals, popsize=128, stop_hist=0))]
             for k in range(onum):       
                 opt_result.append(p.apply_async(opt[k].run))
             p.close()

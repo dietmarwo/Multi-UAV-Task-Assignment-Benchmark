@@ -50,7 +50,8 @@ def fitness_(gene, vehicle_num, vehicles_speed, target_num, targets, time_lim, m
     return reward
 
 class Optimizer():
-    def __init__(self, vehicle_num, vehicles_speed, target_num, targets, time_lim, opt):
+    def __init__(self, env, vehicle_num, vehicles_speed, target_num, targets, time_lim, opt):
+        self.env = env
         self.optname = opt.name
         self.opt = opt
         self.vehicle_num = vehicle_num
@@ -65,26 +66,28 @@ class Optimizer():
                 self.map[j, i] = self.map[i, j] = np.linalg.norm(
                     targets[i, :2]-targets[j, :2])
         self.workers = int(mp.cpu_count()/4) # leave threads for other tests
-        self.retries = 1
-        
+        self.retries = env.retries
+        self.upper = np.array([self.target_num] * (self.vehicle_num-1) + list(range(self.target_num, 1, -1)))-1E-9
+        self.dim = len(self.upper)
+       
     def name(self):
         return self.optname.split()[0]
+    
+    def get_gene(self, x):
+        return (x*self.upper).astype(int)
 
-    def fitness(self, gene):   
-        return -fitness_(gene.astype(int), self.vehicle_num, self.vehicles_speed, 
+    def fitness(self, x):   
+        return -fitness_(self.get_gene(x), self.vehicle_num, self.vehicles_speed, 
                            self.target_num, self.targets, self.time_lim, self.map)
         
     def run(self):
         try:
             print(self.name() + " start, pid: %s" % os.getpid())
             start_time = time.time()
-            
-            upper = np.array([self.target_num] * (self.vehicle_num-1) + list(range(self.target_num, 1, -1)))-1E-9
-            dim = self.vehicle_num + self.target_num - 2
-            bounds = Bounds([0] * dim, upper) 
+            bounds = Bounds([0] * self.dim, [1] * self.dim) 
             res = retry.minimize(self.fitness, bounds, optimizer=self.opt, 
                                  num_retries=self.workers*self.retries, workers=self.workers, logger=None)
-            gene = res.x.astype(int)
+            gene = self.get_gene(res.x)
     
             ins = np.zeros(self.target_num+1, dtype=np.int32)
             seq = np.zeros(self.target_num, dtype=np.int32)

@@ -12,18 +12,17 @@ from fcmaes.optimizer import wrapper
 from evaluate import Env
 import multiprocessing as mp
 from fcmaesopt import Optimizer
-from fcmaes.optimizer import Bite_cpp, De_cpp, Crfmnes_cpp
+from fcmaes.optimizer import Bite_cpp, Cma_cpp, Crfmnes_cpp
 
-def get_optimizer(vehicle_num, target_num, map_size, opt):
-    env = Env(vehicle_num,target_num,map_size,visualized=True)
-    return Optimizer(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, opt)
+def get_optimizer(vehicle_num, target_num, map_size, opt, seed = None):
+    env = Env(vehicle_num,target_num,map_size,visualized=True,seed=seed)
+    return Optimizer(env, vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, opt)
 
 def optimize(vehicle_num, target_num, map_size):
     evals = 2000000
-    dim = vehicle_num + target_num - 2
-    optimizer = get_optimizer(vehicle_num, target_num, map_size, Bite_cpp(evals))
-    #optimizer = get_optimizer(vehicle_num, target_num, map_size, Crfmnes_cpp(evals))
-    #optimizer = get_optimizer(vehicle_num, target_num, map_size, De_cpp(evals, ints=[True]*dim))
+    #optimizer = get_optimizer(vehicle_num, target_num, map_size, Bite_cpp(evals), 65)
+    #optimizer = get_optimizer(vehicle_num, target_num, map_size, Crfmnes_cpp(evals, popsize=128), 65)
+    optimizer = get_optimizer(vehicle_num, target_num, map_size, Cma_cpp(evals, popsize=128, stop_hist=0), 65)
     optimizer.fitness = wrapper(optimizer.fitness)
     optimizer.workers = mp.cpu_count()
     task_assignment, time =  optimizer.run()

@@ -99,18 +99,21 @@ class Fitness:
             for j in range(i):
                 self.map[j, i] = self.map[i, j] = np.linalg.norm(
                     targets[i, :2]-targets[j, :2])
-        upper = np.array([target_num] * (vehicle_num-1) + list(range(target_num, 1, -1)))-1E-9
-        self.bounds = Bounds([0] * self.dim, upper) 
+        self.upper = np.array([target_num] * (vehicle_num-1) + list(range(target_num, 1, -1)))-1E-9
+        self.bounds = Bounds([0] * self.dim, [1] * self.dim) 
 
-    def __call__(self, gene):   
-        return fitness_(gene.astype(int), self.vehicle_num, self.vehicles_speed, 
+    def get_gene(self, x):
+        return (x*self.upper).astype(int)
+
+    def __call__(self, x):   
+        return fitness_(self.get_gene(x), self.vehicle_num, self.vehicles_speed, 
                            self.target_num, self.targets, self.time_lim, self.map)
 
 # deliver both MO and SO problem instances for comparison
-def get_fitness(vehicle_num, target_num, map_size):
-    env = Env(vehicle_num,target_num,map_size,visualized=True)
+def get_fitness(vehicle_num, target_num, map_size, seed = None):
+    env = Env(vehicle_num,target_num,map_size,visualized=True, seed=seed)
     return Fitness(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim), \
-           Optimizer(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Bite_cpp(0))
+           Optimizer(env, vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Bite_cpp(0))
 
 def main():
     try:      
@@ -122,7 +125,7 @@ def main():
         # medium scale
         #mo_problem, so_problem = get_fitness(10,60,1e4)
         # large scale       
-        mo_problem, so_problem = get_fitness(15,90,1.5e4)
+        mo_problem, so_problem = get_fitness(15,90, 1.5e4, 65)
         
         mo_fun = mode.wrapper(mo_problem, nobj, interval = 1E12)
         so_fun = wrapper(so_problem.fitness)

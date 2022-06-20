@@ -15,7 +15,7 @@
 3) Adds standard continuous optimization algorithms: 
     - [BiteOpt](https://github.com/avaneev/biteopt) from Aleksey Vaneev
     - [CR-FM-NES](https://arxiv.org/abs/2201.11422) from Masahiro Nomura
-    - [fcmaes DE](https://github.com/dietmarwo/fast-cma-es) from Dietmar Wolz
+    - [CMA-ES](https://cma-es.github.io/) from N. Hansen
     all using the same fitness function as GA.py. 
     These are by far the simplest implementations, only the fitness function needs
     to be coded, since we can use algorithms from the continuous optimization library 
@@ -31,7 +31,7 @@
 6) Added test_fcmaes.py where you can monitor the progress of fcmaes algorithms applied to the problem.
 
 7) Added test_mode.py where you can monitor the progress of fcmaes-MODE applied to the problem and compare it
-   to BiteOpt for the same instance. fcmaes-MODE is a multi-objective optimizer applied to a 
+   for the same instance. fcmaes-MODE is a multi-objective optimizer applied to a 
    multi-objective variant of the problem.
    Objectives are: reward (to be maximized), maximal time (to be minimized), energy (to be minimized).
    The maximal time constraint from the single objective case is still valid.
@@ -54,7 +54,7 @@ Please refer to the paper to see more detail.
 
 Xiao, K., Lu, J., Nie, Y., Ma, L., Wang, X., Wang, G.: A Benchmark for Multi-UAV Task Assignment of an Extended Team Orienteering Problem. arXiv preprint **[ arXiv:2009.00363](https://arxiv.org/abs/2009.00363)**  (2020)
 
-See [fcmaes](https://github.com/dietmarwo/fast-cma-es) and [BiteOpt](https://github.com/avaneev/biteopt) for details regarding BiteOpt parallel retry. 
+See [fcmaes](https://github.com/dietmarwo/fast-cma-es) and [BiteOpt](https://github.com/avaneev/biteopt) for details regarding fcmaes parallel retry and BiteOpt. 
 
 ## Usage
 
