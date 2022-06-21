@@ -46,7 +46,7 @@
 additional decision variable and uses the np.argmin-trick to generate a sequence of unique indices from a 
 list of continuous decision variables. Specially for large problems this improves the results significantly. 
 
-2) Do 'pip install fcmaes --upgrade' before executinf the experiments, since fcmaes version >= 1.3.36 is required.
+2) Do 'pip install fcmaes --upgrade' before executing the experiments, since fcmaes version >= 1.3.36 is required.
 
 ## Introduction
 A benchmark for multi-UAV task assignment is presented in order to evaluate different algorithms. An extended Team Orienteering Problem is modeled for a kind of multi-UAV task assignment problem. Three intelligent algorithms, i.e., Genetic Algorithm, Ant Colony Optimization and Particle Swarm Optimization are implemented to solve the problem. For comparison we additionally apply the continuous optimization algorithm [BiteOpt](https://github.com/avaneev/biteopt) using the 
