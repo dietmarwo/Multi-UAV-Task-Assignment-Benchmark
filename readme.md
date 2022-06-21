@@ -85,18 +85,21 @@ You can replace one algorithm  below with another algorithm in `evaluate.py`. If
 
 ```python
         env = Env(vehicle_num,target_num,map_size,visualized=True)
-        for j in range(num):
-            p=NestablePool(mp.cpu_count())
-            opt = [GA(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim),
-                   ACO(vehicle_num,target_num,env.vehicles_speed,env.targets,env.time_lim),
-                   PSO(vehicle_num,target_num ,env.targets,env.vehicles_speed,env.time_lim),
-                   Optimizer(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Bite_cpp(2000000)),
-                   Optimizer(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Crfmnes_cpp(2000000)),
-                   # we use mixed integer enhancement for fcmaes differential evolution (parameter ints)
-                   Optimizer(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, De_cpp(2000000, ints=[True]*dim))]
-            for k in range(onum):       
-                opt_result.append(p.apply_async(opt[k].run))
-
+        for i in range(num):
+            env = Env(vehicle_num,target_num,map_size,visualized=True,seed=37*i+13)
+            for j in range(num):
+                opt_result = []
+                p=NestablePool(mp.cpu_count())
+                opt = [GA(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim),
+                       ACO(vehicle_num,target_num,env.vehicles_speed,env.targets,env.time_lim),
+                       PSO(vehicle_num,target_num ,env.targets,env.vehicles_speed,env.time_lim),
+                       Optimizer(env,vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Bite_cpp(env.evals)),
+                       Optimizer(env,vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Crfmnes_cpp(env.evals, popsize=128)),
+                       Optimizer(env,vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Cma_cpp(env.evals, popsize=128, stop_hist=0))]
+                for k in range(onum):       
+                    opt_result.append(p.apply_async(opt[k].run))
+                p.close()
+                p.join()
 ```
 
 ### 3. About reinforcement learning
