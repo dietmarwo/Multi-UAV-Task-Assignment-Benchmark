@@ -37,7 +37,7 @@
    The maximal time constraint from the single objective case is still valid.
    Energy consumption is approximated by `sum(dt*v*v)` 
    
-8) Tests use the same seeds to generate the test problems for each runs to enable comparisons of different
+8) Tests use the same seeds to generate the test problems for each run to enable the comparison of different
    runs.
    
 ## UPDATE
