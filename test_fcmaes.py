@@ -30,8 +30,8 @@ def optimize(vehicle_num, target_num, map_size):
    
 if __name__=='__main__':
     # small scale
-    #optimize(5,30,5e3)
+    optimize(5,30,5e3)
     # medium scale
     #optimize(10,60,1e4)
     # large scale
-    optimize(15,90,1.5e4)
+    #optimize(15,90,1.5e4)

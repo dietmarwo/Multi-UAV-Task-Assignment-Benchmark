@@ -118,7 +118,7 @@ def get_fitness(vehicle_num, target_num, map_size, seed = None):
 def main():
     try:      
         nobj = 3
-        evals = 5000000 # even 100000000 makes sense, but requires about 1 hour
+        evals = 500000000 # even 100000000 makes sense, but requires about 1 hour
         
         # small scale
         #mo_problem, so_problem = get_fitness(5,30,5e3)
@@ -134,7 +134,7 @@ def main():
                 
         # MO parallel optimization retry
         xs, ys = modecpp.retry(mo_fun, nobj, 0, 
-                      mo_problem.bounds, num_retries=workers, popsize = 512,
+                      mo_problem.bounds, num_retries=workers, popsize = 1024,
                   max_evaluations = evals, nsga_update = True, workers=workers)
 
         name = "pareto_uav"

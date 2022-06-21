@@ -59,15 +59,15 @@ class Env():
         if vehicle_num==5:
             self.size='small'
             self.evals = 1000000
-            self.retries = 1
+            self.retries = 2
         if vehicle_num==10:
             self.size='medium'
             self.evals = 1500000
-            self.retries = 1
+            self.retries = 2
         if vehicle_num==15:
             self.size='large'
-            self.evals = 2000000
-            self.retries = 1
+            self.evals = 2500000
+            self.retries = 2
         self.map_size = map_size
         self.speed_range = [10, 15, 30]
         #self.time_lim = 1e6

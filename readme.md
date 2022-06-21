@@ -16,7 +16,7 @@
     - [BiteOpt](https://github.com/avaneev/biteopt) from Aleksey Vaneev
     - [CR-FM-NES](https://arxiv.org/abs/2201.11422) from Masahiro Nomura
     - [CMA-ES](https://cma-es.github.io/) from N. Hansen
-    all using the same fitness function as GA.py. 
+    all using the same fitness function improving the one for GA.py. 
     These are by far the simplest implementations, only the fitness function needs
     to be coded, since we can use algorithms from the continuous optimization library 
     [fcmaes](https://github.com/dietmarwo/fast-cma-es). Execute "pip install fcmaes" to use it. 
