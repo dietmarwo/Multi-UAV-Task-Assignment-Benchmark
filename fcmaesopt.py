@@ -59,12 +59,13 @@ class Optimizer():
             for j in range(i):
                 self.map[j, i] = self.map[i, j] = np.linalg.norm(
                     targets[i, :2]-targets[j, :2])
-        self.workers = int(mp.cpu_count()/4) # leave threads for other tests
+        self.workers = int(mp.cpu_count()/3) # leave threads for other tests
         self.retries = env.retries
         self.dim = self.target_num + self.vehicle_num - 1
        
     def name(self):
-        return self.optname.split()[0]
+        #return self.optname.split()[0]
+        return self.optname.replace(' -> ', '_').replace(' cpp', '')
 
     def fitness(self, x):   
         return -fitness_(x, self.vehicle_num, self.vehicles_speed, 

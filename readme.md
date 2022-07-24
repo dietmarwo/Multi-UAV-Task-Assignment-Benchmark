@@ -12,7 +12,7 @@
     problem size you see which algorithms scale badly: Increase execution time superlinear
     in relation to the problem size. Avoid these for large problems. 
 
-3) Adds standard continuous optimization algorithms: 
+3) Adds standard continuous optimization algorithms based on: 
     - [BiteOpt](https://github.com/avaneev/biteopt) from Aleksey Vaneev
     - [CR-FM-NES](https://arxiv.org/abs/2201.11422) from Masahiro Nomura
     - [CMA-ES](https://cma-es.github.io/) from N. Hansen
@@ -93,9 +93,8 @@ You can replace one algorithm  below with another algorithm in `evaluate.py`. If
                 opt = [GA(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim),
                        ACO(vehicle_num,target_num,env.vehicles_speed,env.targets,env.time_lim),
                        PSO(vehicle_num,target_num ,env.targets,env.vehicles_speed,env.time_lim),
-                       Optimizer(env,vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Bite_cpp(env.evals)),
-                       Optimizer(env,vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Crfmnes_cpp(env.evals, popsize=128)),
-                       Optimizer(env,vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Cma_cpp(env.evals, popsize=128, stop_hist=0))]
+                       Optimizer(env,vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, crfmnes_bite(env.evals, M=6, popsize=env.popsize)),
+                       Optimizer(env,vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, cma_bite(env.evals, M=6, popsize=env.popsize))]
                 for k in range(onum):       
                     opt_result.append(p.apply_async(opt[k].run))
                 p.close()

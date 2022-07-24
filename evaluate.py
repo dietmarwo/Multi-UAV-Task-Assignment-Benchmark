@@ -26,7 +26,7 @@ from ga import GA
 from aco import ACO
 from pso import PSO
 from fcmaesopt import Optimizer
-from fcmaes.optimizer import Bite_cpp, Cma_cpp, Crfmnes_cpp
+from fcmaes.optimizer import Bite_cpp, Cma_cpp, Crfmnes_cpp, crfmnes_bite, cma_bite
 
 import multiprocessing as mp
 import seaborn as sns
@@ -58,16 +58,19 @@ class Env():
         self.targets = np.zeros(shape=(target_num+1,4),dtype=np.int32)
         if vehicle_num==5:
             self.size='small'
-            self.evals = 1000000
+            self.evals = 2000000
             self.retries = 2
+            self.popsize = 150
         if vehicle_num==10:
             self.size='medium'
-            self.evals = 1500000
+            self.evals = 4000000
             self.retries = 2
+            self.popsize = 300
         if vehicle_num==15:
             self.size='large'
-            self.evals = 2500000
+            self.evals = 8000000
             self.retries = 2
+            self.popsize = 500
         self.map_size = map_size
         self.speed_range = [10, 15, 30]
         #self.time_lim = 1e6
@@ -185,7 +188,7 @@ def evaluate(vehicle_num, target_num, map_size):
     if vehicle_num==15:
         size='large'
     num = 5
-    onum = 6
+    onum = 5
     re_opt = []
     for _ in range(onum):       
         re_opt.append([[] for i in range(num)])
@@ -197,12 +200,9 @@ def evaluate(vehicle_num, target_num, map_size):
             opt = [GA(vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim),
                    ACO(vehicle_num,target_num,env.vehicles_speed,env.targets,env.time_lim),
                    PSO(vehicle_num,target_num ,env.targets,env.vehicles_speed,env.time_lim),
-                   Optimizer(env,vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Bite_cpp(env.evals)),
-                   Optimizer(env,vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Crfmnes_cpp(env.evals, popsize=128)),
-                   # we have to disable premature termination of CMA-ES
-                   Optimizer(env,vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, Cma_cpp(env.evals, popsize=128, stop_hist=0))]
-            for k in range(onum):       
-                opt_result.append(p.apply_async(opt[k].run))
+                   Optimizer(env,vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, crfmnes_bite(env.evals, M=6, popsize=env.popsize)),
+                   Optimizer(env,vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, cma_bite(env.evals, M=6, popsize=env.popsize))]
+            opt_result.append(p.apply_async(opt[k].run))
             p.close()
             p.join()
             for k in range(onum): 
