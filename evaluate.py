@@ -11,7 +11,7 @@
 #     - decreased effort for ACO. 
 
 # 3) Adds a standard continuous optimization algorithms
-#    BiteOpt, CR-FM-NES and DE using the same fitness function as GA.py. 
+#    CR-FM-NES->BiteOpt and CMA-ES->BiteOpt using the same fitness function as GA.py. 
 
 # 4) Uses NestablePool to enable BiteOpt multiprocessing - many optimization runs
 #    are performed in parallel and the best result is returned. 
