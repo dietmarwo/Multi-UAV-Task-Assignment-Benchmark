@@ -51,7 +51,7 @@ list of continuous decision variables. Specially for large problems this improve
 3) Do 'pip install fcmaes --upgrade' before executing the experiments, since fcmaes version >= 1.4.2 is required.
 
 ## Introduction
-A benchmark for multi-UAV task assignment is presented in order to evaluate different algorithms. An extended Team Orienteering Problem is modeled for a kind of multi-UAV task assignment problem. Three intelligent algorithms, i.e., Genetic Algorithm, Ant Colony Optimization and Particle Swarm Optimization are implemented to solve the problem. For comparison we additionally apply the continuous optimization algorithms using the 
+A benchmark for multi-UAV task assignment is presented in order to evaluate different algorithms. An extended Team Orienteering Problem is modeled for a kind of multi-UAV task assignment problem. Three intelligent algorithms, i.e., Genetic Algorithm, Ant Colony Optimization and Particle Swarm Optimization are implemented to solve the problem. For comparison we additionally apply two continuous optimization algorithms using the 
 [fcmaes optimization library](https://github.com/dietmarwo/fast-cma-es) for parallel execution.
 
 A series of experiments with different settings are conducted to evaluate six algorithms. The modeled problem and the evaluation results constitute a benchmark, which can be used to evaluate other algorithms used for multi-UAV task assignment problems.
