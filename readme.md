@@ -54,7 +54,7 @@ list of continuous decision variables. Specially for large problems this improve
 A benchmark for multi-UAV task assignment is presented in order to evaluate different algorithms. An extended Team Orienteering Problem is modeled for a kind of multi-UAV task assignment problem. Three intelligent algorithms, i.e., Genetic Algorithm, Ant Colony Optimization and Particle Swarm Optimization are implemented to solve the problem. For comparison we additionally apply two continuous optimization algorithms using the 
 [fcmaes optimization library](https://github.com/dietmarwo/fast-cma-es) for parallel execution.
 
-A series of experiments with different settings are conducted to evaluate six algorithms. The modeled problem and the evaluation results constitute a benchmark, which can be used to evaluate other algorithms used for multi-UAV task assignment problems.
+A series of experiments with different settings are conducted to evaluate these five algorithms. The modeled problem and the evaluation results constitute a benchmark, which can be used to evaluate other algorithms used for multi-UAV task assignment problems.
 
 Notice that the first three algorithms run single threaded, the two fcmaes continuous optimizers divide the remaining threads available on the machine to perform parallel optimization runs.
 Optimization cannot easily utilize GPU resources, so at least we should utilize the whole CPU when comparing later with machine learning approaches. 
