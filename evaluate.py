@@ -202,7 +202,8 @@ def evaluate(vehicle_num, target_num, map_size):
                    PSO(vehicle_num,target_num ,env.targets,env.vehicles_speed,env.time_lim),
                    Optimizer(env,vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, crfmnes_bite(env.evals, M=6, popsize=env.popsize)),
                    Optimizer(env,vehicle_num,env.vehicles_speed,target_num,env.targets,env.time_lim, cma_bite(env.evals, M=6, popsize=env.popsize))]
-            opt_result.append(p.apply_async(opt[k].run))
+            for k in range(onum): 
+                opt_result.append(p.apply_async(opt[k].run))
             p.close()
             p.join()
             for k in range(onum): 
